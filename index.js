@@ -1,22 +1,68 @@
 const http = require('http');
-let path = require('path');
-let fs = require('fs');
-
+const url = require('url');
+const path = require('path');
+const fs = require('fs');
 let html = "";
 
 let server = http.createServer(function(req, res) {
 	if (req.url == '/jokes' && req.method == 'GET') {
 	    getAllJokes(req, res);
 	}
-	else {
-        response.writeHead(404, {'Content-Type':'text/html'});
-        html = "<h3>Error 404!!!</h3>"
-        response.end();
+	else if (req.url == '/jokes' && req.method == 'POST') {
+	    addJoke(req, res);
+	}
+	else if (req.url.startsWith('/like')){
+        like(req, res);
 	}  
+	else {
+        res.writeHead(404, {'Content-Type':'text/html'});
+        html = "<h3>Error 404!!!</h3>";
+        res.end(html);
+	}  
+
 });
 
 server.listen(3000);
 
 function getAllJokes(req, res) {
+	let dir = fs.readdirSync('data');
+	let allJokes = [];
+	for (let i = 0; i < dir.length; i++) {
+		let file = fs.readFileSync(path.join('data', i+'.json'));
+	    let jokeJson = file.toString(); 
+	    let joke = JSON.parse(jokeJson);
+        joke.id = i;
 
+        allJokes.push(joke);
+	}
+    res.writeHead(200, {
+	'Content-Type':'application/json',
+	'charset':'utf-8'
+     });
+
+	res.end(JSON.stringify(allJokes));
+}
+
+function addJoke(req, res) {
+    let data = '';
+    req.on('data', function(chunc) {
+    	data += chunc
+    })
+    req.on('end', function() {
+        let joke = JSON.parse(data);
+        joke.lices = 0;
+        joke.dislikes = 0;
+
+        let dir = fs.readdirSync('data');
+        let fileName = dir.length+'.json';
+        fs.writeFileSync(path.join('data', fileName), JSON.stringify(joke));
+
+        res.end();
+    })
+}
+
+function like(req, res) {
+	let params = url.parse(req.url, true).query;
+	let id = params.id;
+	console.log(id);
 }
