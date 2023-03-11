@@ -13,6 +13,9 @@ let server = http.createServer(function(req, res) {
 	}
 	else if (req.url.startsWith('/like')){
         like(req, res);
+    }
+    else if (req.url.startsWith('/dislike')){
+        dislike(req, res);
 	}  
 	else {
         res.writeHead(404, {'Content-Type':'text/html'});
@@ -64,5 +67,25 @@ function addJoke(req, res) {
 function like(req, res) {
 	let params = url.parse(req.url, true).query;
 	let id = params.id;
-	console.log(id);
+	let dir = fs.readdirSync('data');
+	let fileName = path.join('data', id+'.json');
+	let file = fs.readFileSync(fileName);
+	let jokeJson = file.toString();
+	let joke = JSON.parse(jokeJson);
+	joke.likes++;
+	fs.writeFileSync(fileName, JSON.stringify(joke));
+	res.end();
+}
+
+function dislike(req, res) {
+	let params = url.parse(req.url, true).query;
+	let id = params.id;
+	let dir = fs.readdirSync('data');
+	let fileName = path.join('data', id+'.json');
+	let file = fs.readFileSync(fileName);
+	let jokeJson = file.toString();
+	let joke = JSON.parse(jokeJson);
+	joke.dislikes++;
+	fs.writeFileSync(fileName, JSON.stringify(joke));
+	res.end();
 }
